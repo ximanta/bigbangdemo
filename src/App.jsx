@@ -1,47 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import Breadcrumbs from './components/Breadcrumbs';
 import HomePage from './pages/HomePage';
-import ArticlePage from './pages/ArticlePage';
-import CategoryPage from './pages/CategoryPage';
-import SearchPage from './pages/SearchPage';
-import { articles, categories } from './data/mockData';
+import ShopPage from './pages/ShopPage';
+import ProductDetailPage from './pages/ProductDetailPage';
+import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import { AccountPage, AccountDashboard, OrderHistory, ProfileDetails, SavedAddresses, PaymentMethods } from './pages/AccountPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
-  const [searchResults, setSearchResults] = useState([]);
-  const navigate = useNavigate();
-
-  const handleSearch = (query) => {
-    if (query.trim() === '') {
-      setSearchResults([]);
-      navigate('/search');
-      return;
-    }
-
-    const filteredArticles = articles.filter(article =>
-      article.title.toLowerCase().includes(query.toLowerCase()) ||
-      article.excerpt.toLowerCase().includes(query.toLowerCase()) ||
-      article.content.some(block =>
-        block.type === 'paragraph' && block.text.toLowerCase().includes(query.toLowerCase())
-      )
-    );
-    setSearchResults(filteredArticles);
-    navigate('/search?q=' + encodeURIComponent(query));
-  };
-
   return (
     <div className="app-container">
-      <Header onSearch={handleSearch} />
-      <main className="main-content">
+      <Header />
+      <Breadcrumbs />
+      <main>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/article/:slug" element={<ArticlePage />} />
-          <Route path="/category/:categoryName" element={<CategoryPage />} />
-          <Route
-            path="/search"
-            element={<SearchPage searchResults={searchResults} articles={articles} />}
-          />
+          <Route path="/shop" element={<ShopPage />} />
+          <Route path="/product/:id" element={<ProductDetailPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/account" element={<AccountPage />}>
+            <Route index element={<AccountDashboard />} />
+            <Route path="orders" element={<OrderHistory />} />
+            <Route path="profile" element={<ProfileDetails />} />
+            <Route path="addresses" element={<SavedAddresses />} />
+            <Route path="payment" element={<PaymentMethods />} />
+          </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
       <Footer />

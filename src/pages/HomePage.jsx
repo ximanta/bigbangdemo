@@ -1,77 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import ArticleCard from '../components/ArticleCard';
-import HeroArticle from '../components/HeroArticle';
-import LoadingSpinner from '../components/LoadingSpinner';
-import ErrorMessage from '../components/ErrorMessage';
-import { articles, categories } from '../data/mockData';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { products } from '../data/products';
+import ProductCard from '../components/ProductCard';
+import Button from '../components/Button';
 
-function HomePage() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [featuredArticle, setFeaturedArticle] = useState(null);
-  const [latestArticles, setLatestArticles] = useState([]);
-
-  useEffect(() => {
-    // Simulate data fetching
-    const fetchData = () => {
-      try {
-        setLoading(true);
-        // Sort articles by date to get latest
-        const sortedArticles = [...articles].sort((a, b) => new Date(b.date) - new Date(a.date));
-        setFeaturedArticle(sortedArticles[0]);
-        setLatestArticles(sortedArticles.slice(1, 10)); // Get top 9 latest articles after featured
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to load articles.');
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-  if (error) {
-    return <ErrorMessage message={error} />;
-  }
+const HomePage = () => {
+  const featuredProducts = products.slice(0, 4);
 
   return (
-    <div className="home-page container">
-      {featuredArticle && (
-        <section className="home-page__hero mb-lg">
-          <HeroArticle article={featuredArticle} />
-        </section>
-      )}
-
-      <section className="home-page__categories mb-lg">
-        <h2 className="text-center mb-lg">Explore Categories</h2>
-        <div className="home-page__category-list">
-          {categories.map((category) => (
-            <Link
-              key={category}
-              to={`/category/${category.toLowerCase()}`}
-              className="button button--secondary home-page__category-button"
-            >
-              {category}
-            </Link>
-          ))}
+    <div className="home-page">
+      <section className="hero-section" style={{ background: 'linear-gradient(to right, #007bff, #6c757d)', color: 'white', textAlign: 'center', padding: '6rem 0', marginBottom: 'var(--spacing-xl)' }}>
+        <div className="container">
+          <h1>Discover Your Next Favorite Item</h1>
+          <p style={{ fontSize: '1.25rem', marginBottom: 'var(--spacing-xl)' }}>
+            Shop the latest trends and essential products for every need.
+          </p>
+          <Link to="/shop">
+            <Button variant="secondary" size="large">
+              Shop Now
+            </Button>
+          </Link>
         </div>
       </section>
 
-      <section className="home-page__latest-articles">
-        <h2 className="text-center mb-lg">Latest Articles</h2>
-        <div className="grid-layout">
-          {latestArticles.map((article) => (
-            <ArticleCard key={article.id} article={article} />
+      <section className="container" style={{ marginBottom: 'var(--spacing-xl)' }}>
+        <h2 className="text-center" style={{ marginBottom: 'var(--spacing-xl)' }}>Featured Products</h2>
+        <div className="grid-4-col">
+          {featuredProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
           ))}
+        </div>
+        <div className="text-center" style={{ marginTop: 'var(--spacing-xl)' }}>
+          <Link to="/shop">
+            <Button variant="primary">
+              View All Products
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      <section className="container" style={{ marginBottom: 'var(--spacing-xl)' }}>
+        <h2 className="text-center" style={{ marginBottom: 'var(--spacing-xl)' }}>Why Shop With Us?</h2>
+        <div className="grid-3-col">
+          <div className="card text-center">
+            <h3>Fast Shipping</h3>
+            <p>Get your orders delivered quickly and reliably to your doorstep.</p>
+          </div>
+          <div className="card text-center">
+            <h3>Secure Payments</h3>
+            <p>Shop with confidence using our secure and encrypted payment gateways.</p>
+          </div>
+          <div className="card text-center">
+            <h3>Quality Products</h3>
+            <p>We source only the best products to ensure your satisfaction.</p>
+          </div>
         </div>
       </section>
     </div>
   );
-}
+};
 
 export default HomePage;
