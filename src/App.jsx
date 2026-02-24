@@ -1,1 +1,52 @@
-import React, { useState, useEffect } from 'react';import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';import Welcome from './pages/Welcome.jsx';import Auth from './pages/Auth.jsx';import ProfileSetup from './pages/ProfileSetup.jsx';import Questionnaire from './pages/Questionnaire.jsx';import Results from './pages/Results.jsx';import Recommendations from './pages/Recommendations.jsx';import Dashboard from './pages/Dashboard.jsx';import Settings from './pages/Settings.jsx';import NavBar from './components/NavBar.jsx';import LoadingSpinner from './components/LoadingSpinner.jsx';import Toast from './components/Toast.jsx';function App() {const [isLoggedIn, setIsLoggedIn] = useState(false);const [userProfile, setUserProfile] = useState(null);const [assessmentHistory, setAssessmentHistory] = useState([]);const [currentAssessmentAnswers, setCurrentAssessmentAnswers] = useState({});const [latestBiologicalAge, setLatestBiologicalAge] = useState(null);const [isLoading, setIsLoading] = useState(true);const [toast, setToast] = useState(null);const navigate = useNavigate();const location = useLocation();useEffect(() => {const token = localStorage.getItem('authToken');const storedProfile = JSON.parse(localStorage.getItem('userProfile'));const storedHistory = JSON.parse(localStorage.getItem('assessmentHistory')) || [];if (token && storedProfile) {setIsLoggedIn(true);setUserProfile(storedProfile);setAssessmentHistory(storedHistory);if (storedHistory.length > 0) {setLatestBiologicalAge(storedHistory[0].biologicalAge);}}setIsLoading(false);}, []);const showToast = (message, type = 'info') => {setToast({ message, type });setTimeout(() => setToast(null), 3000);};const handleLogin = (profile) => {localStorage.setItem('authToken', 'dummy-token');localStorage.setItem('userProfile', JSON.stringify(profile));setIsLoggedIn(true);setUserProfile(profile);navigate('/dashboard');showToast('Login successful!', 'success');};const handleLogout = () => {localStorage.removeItem('authToken');localStorage.removeItem('userProfile');localStorage.removeItem('assessmentHistory');setIsLoggedIn(false);setUserProfile(null);setAssessmentHistory([]);setLatestBiologicalAge(null);navigate('/auth');showToast('Logged out.', 'info');};const handleProfileUpdate = (profile) => {localStorage.setItem('userProfile', JSON.stringify(profile));setUserProfile(profile);showToast('Profile updated!', 'success');};const addAssessmentResult = (result) => {const newHistory = [{...result, date: new Date().toISOString()},...assessmentHistory];localStorage.setItem('assessmentHistory', JSON.stringify(newHistory));setAssessmentHistory(newHistory);setLatestBiologicalAge(result.biologicalAge);setCurrentAssessmentAnswers({}); // Clear answers after submissionnavigate('/results', { state: { result } });showToast('Assessment completed!', 'success');};const navBarPaths = ['/dashboard', '/assessment', '/history', '/settings'];const showNavBar = isLoggedIn && navBarPaths.some(path => location.pathname.startsWith(path));if (isLoading) {return <LoadingSpinner overlay={true} />;}return (<div className="app-container"><main className="main-content"><Routes><Route path="/" element={isLoggedIn ? <Dashboard userProfile={userProfile} latestBiologicalAge={latestBiologicalAge} assessmentHistory={assessmentHistory} /> : <Welcome />} /><Route path="/welcome" element={<Welcome />} /><Route path="/auth" element={<Auth onLogin={handleLogin} showToast={showToast} />} /><Route path="/profile-setup" element={<ProfileSetup userProfile={userProfile} onSave={handleProfileUpdate} onLogin={handleLogin} showToast={showToast} />} /><Route path="/assessment" element={<Questionnaire userProfile={userProfile} onComplete={addAssessmentResult} currentAnswers={currentAssessmentAnswers} setCurrentAnswers={setCurrentAssessmentAnswers} showToast={showToast} />} /><Route path="/results" element={<Results />} /><Route path="/recommendations" element={<Recommendations />} /><Route path="/dashboard" element={<Dashboard userProfile={userProfile} latestBiologicalAge={latestBiologicalAge} assessmentHistory={assessmentHistory} />} /><Route path="/history" element={<Dashboard userProfile={userProfile} latestBiologicalAge={latestBiologicalAge} assessmentHistory={assessmentHistory} />} /><Route path="/settings" element={<Settings userProfile={userProfile} onLogout={handleLogout} onProfileUpdate={handleProfileUpdate} showToast={showToast} />} /></Routes></main>{showNavBar && <NavBar />}{toast && <Toast message={toast.message} type={toast.type} />}</div>);}.app-container {min-height: 100vh;display: flex;flex-direction: column;}.main-content {flex-grow: 1;padding-bottom: 70px; /* Space for fixed nav bar */}.page-content {padding: 20px;}export default App;
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import HomePage from './pages/HomePage';
+import ArticlePage from './pages/ArticlePage';
+import CategoryPage from './pages/CategoryPage';
+import SearchPage from './pages/SearchPage';
+import { articles, categories } from './data/mockData';
+
+function App() {
+  const [searchResults, setSearchResults] = useState([]);
+  const navigate = useNavigate();
+
+  const handleSearch = (query) => {
+    if (query.trim() === '') {
+      setSearchResults([]);
+      navigate('/search');
+      return;
+    }
+
+    const filteredArticles = articles.filter(article =>
+      article.title.toLowerCase().includes(query.toLowerCase()) ||
+      article.excerpt.toLowerCase().includes(query.toLowerCase()) ||
+      article.content.some(block =>
+        block.type === 'paragraph' && block.text.toLowerCase().includes(query.toLowerCase())
+      )
+    );
+    setSearchResults(filteredArticles);
+    navigate('/search?q=' + encodeURIComponent(query));
+  };
+
+  return (
+    <div className="app-container">
+      <Header onSearch={handleSearch} />
+      <main className="main-content">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/article/:slug" element={<ArticlePage />} />
+          <Route path="/category/:categoryName" element={<CategoryPage />} />
+          <Route
+            path="/search"
+            element={<SearchPage searchResults={searchResults} articles={articles} />}
+          />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+export default App;

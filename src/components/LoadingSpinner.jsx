@@ -1,1 +1,14 @@
-import React from 'react';function LoadingSpinner({overlay = false}) {if (overlay) {return (<div className="loading-spinner-overlay"><div className="loading-spinner"></div></div>);}return (<div className="loading-spinner"></div>);}.loading-spinner {display: inline-block;width: 40px;height: 40px;border: 4px solid rgba(0, 0, 0, 0.1);border-radius: 50%;border-top-color: var(--primary-color);animation: spin 1s ease-in-out infinite;}.loading-spinner-overlay {position: fixed;top: 0;left: 0;width: 100%;height: 100%;background-color: rgba(255, 255, 255, 0.8);display: flex;justify-content: center;align-items: center;z-index: 9999;}@keyframes spin {0% {transform: rotate(0deg);}100% {transform: rotate(360deg);}}export default LoadingSpinner;
+import React from 'react';
+
+function LoadingSpinner() {
+  return (
+    <div className="loading-spinner-wrapper">
+      <div className="loading-spinner" role="status">
+        <span className="sr-only">Loading...</span>
+      </div>
+      <p>Loading content...</p>
+    </div>
+  );
+}
+
+export default LoadingSpinner;
