@@ -9,26 +9,30 @@ import {
 } from "react-router-dom";
 import { useEvents } from "../context/EventContext";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { UserPlus, XCircle } from "lucide-react";
+import { Save, XCircle } from "lucide-react";
 
-const RegisterPage = () => {
+const EditEventPage = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const { getEventById,
-    addDelegate } = useEvents();
+    updateEvent } = useEvents();
 
-  const [event, setEvent] = useState(null);
+  const [eventForm, setEventForm] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [delegateForm, setDelegateForm] = useState({
-    name: "",
-    email: "",
-    agreeTerms: false
-  });
 
   useEffect(() => {
     const foundEvent = getEventById(eventId);
     if (foundEvent) {
-      setEvent(foundEvent);
+      setEventForm({
+        id: foundEvent.id,
+        name: foundEvent.name,
+        dateStart: foundEvent.dateStart,
+        dateEnd: foundEvent.dateEnd,
+        location: foundEvent.location,
+        description: foundEvent.description,
+        agenda: foundEvent.agenda,
+        delegates: foundEvent.delegates
+      });
     } else {
       navigate("/404");
     }
@@ -40,25 +44,16 @@ const RegisterPage = () => {
   );
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setDelegateForm((prev) => ({
+    const { name, value } = e.target;
+    setEventForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value
+      [name]: value
     }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!delegateForm.agreeTerms) {
-      alert("You must agree to the terms and conditions.");
-      return;
-    }
-    addDelegate(eventId,
-      {
-        name: delegateForm.name,
-        email: delegateForm.email
-      }
-    );
+    updateEvent(eventForm);
     navigate(`/events/${eventId}`);
   };
 
@@ -66,57 +61,82 @@ const RegisterPage = () => {
     return <LoadingSpinner fullScreen />;
   }
 
-  if (!event) {
+  if (!eventForm) {
     return null;
   }
 
   return (
     <div className="container main-content">
       <h2 className="text-center margin-top-large">
-        Register for "
-        {event.name}
+        Edit Event: "
+        {eventForm.name}
         "
       </h2>
       <div className="card margin-top-large">
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="delegateName">
-              Full Name
+            <label htmlFor="eventName">
+              Event Name
             </label>
             <input
               type="text"
-              id="delegateName"
+              id="eventName"
               name="name"
-              value={delegateForm.name}
+              value={eventForm.name}
               onChange={handleChange}
               required
             />
           </div>
           <div className="form-group">
-            <label htmlFor="delegateEmail">
-              Email Address
+            <label htmlFor="dateStart">
+              Start Date
             </label>
             <input
-              type="email"
-              id="delegateEmail"
-              name="email"
-              value={delegateForm.email}
+              type="date"
+              id="dateStart"
+              name="dateStart"
+              value={eventForm.dateStart}
               onChange={handleChange}
               required
             />
           </div>
-          <div className="checkbox-group">
+          <div className="form-group">
+            <label htmlFor="dateEnd">
+              End Date
+            </label>
             <input
-              type="checkbox"
-              id="agreeTerms"
-              name="agreeTerms"
-              checked={delegateForm.agreeTerms}
+              type="date"
+              id="dateEnd"
+              name="dateEnd"
+              value={eventForm.dateEnd}
               onChange={handleChange}
               required
             />
-            <label htmlFor="agreeTerms">
-              I agree to the terms and conditions
+          </div>
+          <div className="form-group">
+            <label htmlFor="location">
+              Location
             </label>
+            <input
+              type="text"
+              id="location"
+              name="location"
+              value={eventForm.location}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="description">
+              Description
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              value={eventForm.description}
+              onChange={handleChange}
+              required
+            ></textarea>
           </div>
           <div className="form-actions">
             <button
@@ -131,8 +151,8 @@ const RegisterPage = () => {
               type="submit"
               className="button primary"
             >
-              <UserPlus size={20} />
-              Register Now
+              <Save size={20} />
+              Save Changes
             </button>
           </div>
         </form>
@@ -141,4 +161,4 @@ const RegisterPage = () => {
   );
 };
 
-export default RegisterPage;
+export default EditEventPage;

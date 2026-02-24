@@ -1,10 +1,16 @@
-import React from 'react';
+import React from "react";
 
-const LoadingSpinner = () => {
+const LoadingSpinner = ({ fullScreen = false }) => {
+  if (fullScreen) {
+    return (
+      <div className="loading-spinner-overlay">
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="loading-overlay">
-      <div className="loading-spinner"></div>
-    </div>
+    <div className="spinner"></div>
   );
 };
 

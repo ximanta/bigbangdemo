@@ -1,58 +1,51 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ShoppingCart, User, Search, LogOut } from 'lucide-react';
-import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
-import Button from './Button';
+import React from "react";
+import {
+  Menu,
+  ArrowLeft
+} from "lucide-react";
+import {
+  Link,
+  useLocation,
+  useNavigate
+} from "react-router-dom";
 
-const Header = () => {
-  const { totalItemsInCart } = useCart();
-  const { currentUser, logout } = useAuth();
+const Header = ({ onMenuToggle, eventName }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isDetailPage = location.pathname.includes("/events/") &&
+    location.pathname.split("/").length > 2;
 
-  const handleLogout = () => {
-    logout();
-    alert('Logged out successfully!');
+  const handleBackClick = () => {
+    navigate(-1);
   };
 
   return (
     <header className="header">
-      <div className="container header-content">
-        <Link to="/" className="header-logo">
-          E-Commerce
+      {
+        isDetailPage ? (
+          <button
+            className="icon-button"
+            onClick={handleBackClick}
+            aria-label="Go back"
+          >
+            <ArrowLeft size={24} />
+          </button>
+        ) : (
+          <button
+            className="icon-button"
+            onClick={onMenuToggle}
+            aria-label="Open menu"
+          >
+            <Menu size={24} />
+          </button>
+        )
+      }
+      <h1 className="title">
+        <Link to="/">
+          {eventName || "Event Manager"}
         </Link>
-        <nav className="header-nav">
-          <Link to="/">Home</Link>
-          <Link to="/shop">Shop</Link>
-          <Link to="/categories">Categories</Link>
-          <Link to="/about">About Us</Link>
-        </nav>
-        <div className="header-actions">
-          <div className="header-search">
-            <input type="text" placeholder="Search products..." />
-            <Search className="icon" size={20} />
-          </div>
-          <Link to="/cart" className="cart-icon-wrapper">
-            <ShoppingCart size={24} />
-            {totalItemsInCart > 0 && (
-              <span className="cart-item-count">{totalItemsInCart}</span>
-            )}
-          </Link>
-          {currentUser ? (
-            <div className="flex-group">
-              <Link to="/account">
-                <User size={24} />
-              </Link>
-              <Button variant="link" onClick={handleLogout} className="flex-group">
-                <LogOut size={20} />
-              </Button>
-            </div>
-          ) : (
-            <Link to="/login">
-              <User size={24} />
-            </Link>
-          )}
-        </div>
-      </div>
+      </h1>
+      <div style={{ width: "40px" }}></div>
     </header>
   );
 };
