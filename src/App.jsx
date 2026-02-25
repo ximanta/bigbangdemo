@@ -1,108 +1,135 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import MyTicketsPage from './pages/MyTicketsPage';
-import SubmitTicketPage from './pages/SubmitTicketPage';
-import TicketDetailPage from './pages/TicketDetailPage';
-import SettingsPage from './pages/SettingsPage';
-import NotFoundPage from './pages/NotFoundPage';
-import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
-import NotificationContainer from './components/Notification';
-import { generateId } from './utils/helpers';
+import React from 'react';
+import {
+  Routes,
+  Route
+}
+from 'react-router-dom';
+import { Header } from './components/Header';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { TicketsPage } from './pages/TicketsPage';
+import { TicketDetailPage } from './pages/TicketDetailPage';
+import { NewTicketPage } from './pages/NewTicketPage';
+import { MyTicketsPage } from './pages/MyTicketsPage';
+import { MyTicketDetailPage } from './pages/MyTicketDetailPage';
+import { UsersPage } from './pages/UsersPage';
+import { UserProfilePage } from './pages/UserProfilePage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { useAuth } from './context/AuthContext';
 
-const AppContent = () => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [notifications, setNotifications] = useState([]);
-  const navigate = useNavigate();
-  const location = useLocation();
+export const App = () => {
+  const { currentUser,
+    loading } = useAuth();
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
-    }
-  }, []);
-
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('currentUser', JSON.stringify(currentUser));
-      if (location.pathname === '/' || location.pathname === '/login') {
-        if (currentUser.role === 'agent') {
-          navigate('/dashboard');
-        } else {
-          navigate('/my-tickets');
-        }
-      }
-    } else if (location.pathname !== '/login') {
-      navigate('/login');
-    }
-  }, [currentUser, navigate, location.pathname]);
-
-  const handleLogin = (user) => {
-    setCurrentUser(user);
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('currentUser');
-  };
-
-  const addNotification = (notification) => {
-    const newNotification = { ...notification, id: generateId('NOTIF') };
-    setNotifications((prev) => [...prev, newNotification]);
-  };
-
-  const removeNotification = (id) => {
-    setNotifications((prev) => prev.filter((notif) => notif.id !== id));
-  };
-
-  const showSidebar = currentUser && location.pathname !== '/login';
+  // Role IDs:
+  // 1: Customer
+  // 2: Agent
+  // 3: Administrator
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Navbar currentUser={currentUser} onLogout={handleLogout} />
-      <div style={{ display: 'flex', flex: 1 }}>
-        {showSidebar && <Sidebar role={currentUser.role} />}
-        <Routes>
-          <Route path="/login" element={<LoginPage onLogin={handleLogin} addNotification={addNotification} />} />
+    <>
+      <Header />
+      <Routes>
+        {/* Public Routes */}
+        <Route
+          path="/login"
+          element={<LoginPage />}
+        />
+        <Route
+          path="/register"
+          element={<RegisterPage />}
+        />
+
+        {/* Authenticated Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route
+            path="/profile"
+            element={<UserProfilePage />}
+          />
+        </Route>
+
+        {/* Agent/Admin Routes */}
+        <Route
+          element={
+            <ProtectedRoute
+              allowedRoles={[2, 3]}
+            />
+          }
+        >
           <Route
             path="/dashboard"
-            element={currentUser && currentUser.role === 'agent' ? <DashboardPage /> : <NotFoundPage />}
+            element={<DashboardPage />}
           />
           <Route
-            path="/my-tickets"
-            element={currentUser && currentUser.role === 'customer' ? <MyTicketsPage currentUser={currentUser} /> : <NotFoundPage />}
-          />
-          <Route
-            path="/submit-ticket"
-            element={<SubmitTicketPage currentUser={currentUser} addNotification={addNotification} />}
+            path="/tickets"
+            element={<TicketsPage />}
           />
           <Route
             path="/tickets/:id"
-            element={<TicketDetailPage currentUser={currentUser} addNotification={addNotification} />}
+            element={<TicketDetailPage />}
+          />
+        </Route>
+
+        {/* Admin Only Routes */}
+        <Route
+          element={
+            <ProtectedRoute
+              allowedRoles={[3]}
+            />
+          }
+        >
+          <Route
+            path="/users"
+            element={<UsersPage />}
+          />
+        </Route>
+
+        {/* Customer Routes */}
+        <Route
+          element={
+            <ProtectedRoute
+              allowedRoles={[1]}
+            />
+          }
+        >
+          <Route
+            path="/my-tickets"
+            element={<MyTicketsPage />}
           />
           <Route
             path="/my-tickets/:id"
-            element={<TicketDetailPage currentUser={currentUser} addNotification={addNotification} />}
+            element={<MyTicketDetailPage />}
           />
           <Route
-            path="/settings"
-            element={<SettingsPage />}
+            path="/new-ticket"
+            element={<NewTicketPage />}
           />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </div>
-      <NotificationContainer notifications={notifications} removeNotification={removeNotification} />
-    </div>
+        </Route>
+
+        {/* Redirect based on role after login or to login if not authenticated */}
+        <Route
+          path="/"
+          element={
+            currentUser ? (
+              currentUser.role === 1 ? (
+                <MyTicketsPage />
+              ) : (
+                <DashboardPage />
+              )
+            ) : (
+              <LoginPage />
+            )
+          }
+        />
+
+        {/* Catch-all for unknown routes */}
+        <Route
+          path="*"
+          element={<NotFoundPage />}
+        />
+      </Routes>
+    </>
   );
 };
-
-const App = () => (
-  <BrowserRouter>
-    <AppContent />
-  </BrowserRouter>
-);
-
-export default App;

@@ -7,23 +7,19 @@ import { useNavigate } from 'react-router-dom';
 import { AuthForm } from '../components/AuthForm';
 import { useAuth } from '../context/AuthContext';
 
-export const LoginPage = () => {
+export const RegisterPage = () => {
   const [error,
     setError]
   = useState(null);
-  const { login,
+  const { register,
     loading } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = async (email, password) => {
+  const handleRegister = async (name, email, password) => {
     setError(null);
     try {
-      const user = await login(email, password);
-      if (user.role === 1) {
-        navigate('/my-tickets');
-      } else {
-        navigate('/dashboard');
-      }
+      await register(name, email, password);
+      navigate('/my-tickets'); // Direct customer to their tickets after registration
     } catch (err) {
       setError(err.message);
     }
@@ -31,8 +27,8 @@ export const LoginPage = () => {
 
   return (
     <AuthForm
-      type="login"
-      onSubmit={handleLogin}
+      type="register"
+      onSubmit={handleRegister}
       isLoading={loading}
       error={error}
     />

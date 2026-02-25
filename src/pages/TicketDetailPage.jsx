@@ -1,295 +1,351 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getTicketById, updateTicket, users, statuses, priorities, categories } from '../utils/mockData';
-import { formatDate, generateId } from '../utils/helpers';
-import Dropdown from '../components/Dropdown';
-import TextArea from '../components/TextArea';
-import Button from '../components/Button';
-import FileUpload from '../components/FileUpload';
-import ActivityLog from '../components/ActivityLog';
-import Modal from '../components/Modal';
-import { Send, XCircle } from 'lucide-react';
+import React,
+{
+  useState,
+  useEffect
+}
+from 'react';
+import {
+  useParams,
+  useNavigate
+}
+from 'react-router-dom';
+import { useTickets } from '../context/TicketContext';
+import { useAuth } from '../context/AuthContext';
+import { CommentSection } from '../components/CommentSection';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import {
+  formatDate,
+  getStatusBadgeClass,
+  getPriorityBadgeClass
+}
+from '../utils/helpers';
+import {
+  User,
+  Tag,
+  Clock,
+  Calendar,
+  Hash,
+  AlertCircle,
+  FileText,
+  Activity,
+  CheckCircle,
+  XCircle,
+  Trash2,
+  ChevronLeft
+}
+from 'lucide-react';
 
-const TicketDetailPage = ({ currentUser, addNotification }) => {
+export const TicketDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [ticket, setTicket] = useState(null);
-  const [newComment, setNewComment] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { currentUser,
+    isAdmin,
+    isAgent } = useAuth();
+  const { tickets,
+    getTicketById,
+    getCommentsForTicket,
+    getActivityForTicket,
+    updateTicket,
+    resolveTicket,
+    closeTicket,
+    deleteTicket,
+    getAgents,
+    loading } = useTickets();
 
-  const isAgent = currentUser && currentUser.role === 'agent';
+  const [ticket,
+    setTicket]
+  = useState(null);
+  const [comments,
+    setComments]
+  = useState([]);
+  const [activities,
+    setActivities]
+  = useState([]);
+  const [editMode,
+    setEditMode]
+  = useState(false);
+  const [currentStatus,
+    setCurrentStatus]
+  = useState('');
+  const [currentPriority,
+    setCurrentPriority]
+  = useState('');
+  const [currentAssigneeId,
+    setCurrentAssigneeId]
+  = useState('');
+
+  const agents = getAgents();
 
   useEffect(() => {
-    const foundTicket = getTicketById(id);
-    if (foundTicket) {
-      setTicket(foundTicket);
-    } else {
-      addNotification({ message: 'Ticket not found.', type: 'error' });
-      navigate(isAgent ? '/dashboard' : '/my-tickets');
-    }
-  }, [id, navigate, isAgent, addNotification]);
-
-  const handleUpdateTicket = (field, value) => {
-    if (!ticket) return;
-
-    const updatedTicket = {
-      ...ticket,
-      [field]: value,
-      updatedAt: new Date().toISOString()
-    };
-
-    if (field === 'status' && value === 'Closed') {
-      setIsModalOpen(true);
-      return; // Wait for modal confirmation
-    }
-
-    // Add activity log entry for status/assignee changes
-    let commentContent = '';
-    if (field === 'status' && value !== ticket.status) {
-      commentContent = `Status changed from '${ticket.status}' to '${value}'.`;
-    } else if (field === 'assigneeId' && value !== ticket.assigneeId) {
-      const oldAssignee = users.find(u => u.id === ticket.assigneeId)?.name || 'Unassigned';
-      const newAssignee = users.find(u => u.id === value)?.name || 'Unassigned';
-      commentContent = `Assignee changed from '${oldAssignee}' to '${newAssignee}'.`;
-    }
-
-    if (commentContent) {
-      updatedTicket.comments = [
-        ...(updatedTicket.comments || []),
-        {
-          id: generateId('COMM'),
-          authorId: currentUser.id,
-          type: 'internal',
-          content: commentContent,
-          createdAt: new Date().toISOString()
-        }
-      ];
-    }
-
-    updateTicket(updatedTicket);
-    setTicket(updatedTicket);
-    addNotification({ message: 'Ticket updated successfully!', type: 'success' });
-  };
-
-  const handleAddComment = () => {
-    if (!newComment.trim() || !currentUser || !ticket) return;
-
-    const commentType = isAgent ? 'internal' : 'external';
-    const updatedComments = [
-      ...(ticket.comments || []),
-      {
-        id: generateId('COMM'),
-        authorId: currentUser.id,
-        type: commentType,
-        content: newComment.trim(),
-        createdAt: new Date().toISOString()
+    if (tickets.length > 0) {
+      const foundTicket = getTicketById(id);
+      if (foundTicket) {
+        setTicket(foundTicket);
+        setCurrentStatus(foundTicket.status);
+        setCurrentPriority(foundTicket.priority);
+        setCurrentAssigneeId(foundTicket.assigneeId || 'null');
+        setComments(getCommentsForTicket(id));
+        setActivities(getActivityForTicket(id));
+      } else {
+        navigate('/tickets'); // Redirect if ticket not found
       }
-    ];
+    }
+  },
+  [
+    id,
+    tickets,
+    getTicketById,
+    getCommentsForTicket,
+    getActivityForTicket,
+    navigate
+  ]);
 
-    const updatedTicket = {
-      ...ticket,
-      comments: updatedComments,
-      updatedAt: new Date().toISOString()
-    };
-
-    updateTicket(updatedTicket);
-    setTicket(updatedTicket);
-    setNewComment('');
-    addNotification({ message: 'Comment added!', type: 'success' });
-  };
-
-  const handleFileAttach = (files) => {
-    if (!ticket || !currentUser) return;
-
-    const newAttachments = Array.isArray(files) ? files : [files];
-    const attachmentObjects = newAttachments.map(file => ({
-      fileName: file.name,
-      url: `/uploads/${file.name}` // Mock URL
-    }));
-
-    const updatedTicket = {
-      ...ticket,
-      attachments: [...(ticket.attachments || []), ...attachmentObjects],
-      updatedAt: new Date().toISOString()
-    };
-
-    updateTicket(updatedTicket);
-    setTicket(updatedTicket);
-    addNotification({ message: 'File(s) attached successfully!', type: 'success' });
-  };
-
-  const confirmCloseTicket = () => {
+  const handleUpdateTicket = async () => {
     if (!ticket) return;
-    const updatedTicket = {
-      ...ticket,
-      status: 'Closed',
-      updatedAt: new Date().toISOString(),
-      comments: [
-        ...(ticket.comments || []),
-        {
-          id: generateId('COMM'),
-          authorId: currentUser.id,
-          type: 'internal',
-          content: 'Ticket confirmed closed.',
-          createdAt: new Date().toISOString()
-        }
-      ]
-    };
-    updateTicket(updatedTicket);
-    setTicket(updatedTicket);
-    setIsModalOpen(false);
-    addNotification({ message: 'Ticket has been closed.', type: 'success' });
+    await updateTicket(ticket.id, {
+      status: currentStatus,
+      priority: currentPriority,
+      assigneeId: currentAssigneeId === 'null' ? null : currentAssigneeId
+    });
+    setEditMode(false);
   };
 
-  if (!ticket) {
-    return (
-      <div className="main-content">
-        <div className="container">
-          <p>Loading ticket details...</p>
-        </div>
-      </div>
-    );
+  const handleResolveTicket = async () => {
+    if (window.confirm('Are you sure you want to resolve this ticket?')) {
+      await resolveTicket(ticket.id);
+    }
+  };
+
+  const handleCloseTicket = async () => {
+    if (window.confirm('Are you sure you want to close this ticket?')) {
+      await closeTicket(ticket.id);
+    }
+  };
+
+  const handleDeleteTicket = async () => {
+    if (window.confirm('Are you sure you want to delete this ticket? This action cannot be undone.')) {
+      await deleteTicket(ticket.id);
+      navigate('/tickets');
+    }
+  };
+
+  if (loading || !ticket) {
+    return <LoadingSpinner />;
   }
 
-  const requester = users.find(u => u.id === ticket.requesterId);
-  const assignee = users.find(u => u.id === ticket.assigneeId);
-  const agentUsers = users.filter(user => user.role === 'agent');
+  const canEdit = isAdmin || isAgent;
 
   return (
-    <div className="main-content">
-      <div className="container">
-        <h2 className="card-header">Ticket: {ticket.subject} ({ticket.id})</h2>
+    <div className="container">
+      <button
+        onClick={() => navigate(-1)}
+        className="button button-outline mb-20"
+      >
+        <ChevronLeft size={18} />
+        Back to Tickets
+      </button>
 
-        <div className="ticket-detail-grid">
-          <div className="detail-item">
-            <strong>Requester:</strong> {requester?.name || 'N/A'}
+      <div className="card">
+        <div className="ticket-detail-header">
+          <h2>Ticket: {ticket.subject}</h2>
+          <div className="ticket-actions">
+            {canEdit && !editMode && (
+              <button
+                onClick={() => setEditMode(true)}
+                className="button button-secondary"
+                disabled={loading}
+              >
+                Edit
+              </button>
+            )}
+            {canEdit && editMode && (
+              <button
+                onClick={handleUpdateTicket}
+                className="button button-primary"
+                disabled={loading}
+              >
+                Save
+              </button>
+            )}
+            {canEdit && editMode && (
+              <button
+                onClick={() => setEditMode(false)}
+                className="button button-secondary"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+            )}
+            {canEdit && ticket.status !== 'Resolved' && (
+              <button
+                onClick={handleResolveTicket}
+                className="button button-primary"
+                disabled={loading}
+              >
+                <CheckCircle size={18} />
+                Resolve Ticket
+              </button>
+            )}
+            {canEdit && ticket.status !== 'Closed' && (
+              <button
+                onClick={handleCloseTicket}
+                className="button button-secondary"
+                disabled={loading}
+              >
+                <XCircle size={18} />
+                Close Ticket
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={handleDeleteTicket}
+                className="button button-danger"
+                disabled={loading}
+              >
+                <Trash2 size={18} />
+                Delete Ticket
+              </button>
+            )}
           </div>
-          <div className="detail-item">
-            <strong>Category:</strong> {ticket.category}
+        </div>
+
+        <div className="ticket-meta mb-20">
+          <div className="meta-item">
+            <label><Hash size={14} /> Ticket ID</label>
+            <span>{ticket.id}</span>
           </div>
-          <div className="detail-item">
-            <strong>Created:</strong> {formatDate(ticket.createdAt)}
+          <div className="meta-item">
+            <label><User size={14} /> Customer</label>
+            <span>{ticket.customerName} ({ticket.customerId})</span>
           </div>
-          <div className="detail-item">
-            <strong>Last Updated:</strong> {formatDate(ticket.updatedAt)}
-          </div>
-          <div className="detail-item">
-            <strong>Status:</strong>
-            {isAgent ? (
-              <Dropdown
-                id="status"
-                options={statuses}
-                value={ticket.status}
-                onChange={(e) => handleUpdateTicket('status', e.target.value)}
-              />
+          <div className="meta-item">
+            <label><Tag size={14} /> Status</label>
+            {editMode && canEdit ? (
+              <select
+                className="select-field"
+                value={currentStatus}
+                onChange={(e) => setCurrentStatus(e.target.value)}
+                disabled={loading}
+              >
+                <option value="Open">Open</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Closed">Closed</option>
+              </select>
             ) : (
-              <span className={`status-${ticket.status.toLowerCase().replace(/\s/g, '-')}`}>
+              <span className={`status-badge ${getStatusBadgeClass(ticket.status)}`}>
                 {ticket.status}
               </span>
             )}
           </div>
-          <div className="detail-item">
-            <strong>Priority:</strong>
-            {isAgent ? (
-              <Dropdown
-                id="priority"
-                options={priorities}
-                value={ticket.priority}
-                onChange={(e) => handleUpdateTicket('priority', e.target.value)}
-              />
+          <div className="meta-item">
+            <label><AlertCircle size={14} /> Priority</label>
+            {editMode && canEdit ? (
+              <select
+                className="select-field"
+                value={currentPriority}
+                onChange={(e) => setCurrentPriority(e.target.value)}
+                disabled={loading}
+              >
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
             ) : (
-              <span>{ticket.priority}</span>
+              <span className={`status-badge ${getPriorityBadgeClass(ticket.priority)}`}>
+                {ticket.priority}
+              </span>
             )}
           </div>
-          <div className="detail-item">
-            <strong>Assignee:</strong>
-            {isAgent ? (
-              <Dropdown
-                id="assignee"
-                options={agentUsers.map(agent => ({ value: agent.id, label: agent.name }))}
-                value={ticket.assigneeId || ''}
-                onChange={(e) => handleUpdateTicket('assigneeId', e.target.value)}
-                defaultOptionText="Unassigned"
-              />
+          <div className="meta-item">
+            <label><User size={14} /> Assignee</label>
+            {editMode && canEdit ? (
+              <select
+                className="select-field"
+                value={currentAssigneeId}
+                onChange={(e) => setCurrentAssigneeId(e.target.value)}
+                disabled={loading}
+              >
+                <option value="null">Unassigned</option>
+                {agents.map((agent) => (
+                  <option
+                    key={agent.id}
+                    value={agent.id}
+                  >
+                    {agent.name}
+                  </option>
+                ))}
+              </select>
             ) : (
-              <span>{assignee?.name || 'Unassigned'}</span>
+              <span>{ticket.assigneeName || 'Unassigned'}</span>
             )}
           </div>
-          <div className="detail-item full-width">
-            <strong>Description:</strong>
-            <p>{ticket.description}</p>
+          <div className="meta-item">
+            <label><Calendar size={14} /> Created At</label>
+            <span>{formatDate(ticket.createdAt)}</span>
           </div>
-        </div>
-
-        <div className="card">
-          <h3 className="card-header">Comments & Activity</h3>
-          <ActivityLog activities={ticket.comments} />
-
-          <div style={{ marginTop: '20px' }}>
-            <TextArea
-              id="new-comment"
-              placeholder={isAgent ? "Add an internal note or public comment..." : "Add a comment to your ticket..."}
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              rows={3}
-            />
-            <Button onClick={handleAddComment} variant="primary" style={{ marginTop: '10px' }}>
-              <Send size={18} style={{ marginRight: '8px' }} /> Add Comment
-            </Button>
+          <div className="meta-item">
+            <label><Clock size={14} /> Last Updated</label>
+            <span>{formatDate(ticket.updatedAt)}</span>
           </div>
-        </div>
-
-        <div className="card">
-          <h3 className="card-header">Attachments</h3>
-          <div className="file-list">
-            {ticket.attachments && ticket.attachments.length > 0 ? (
-              ticket.attachments.map((file, index) => (
-                <p key={index}>
-                  <a href={file.url} target="_blank" rel="noopener noreferrer">
-                    {file.fileName}
-                  </a>
-                </p>
-              ))
-            ) : (
-              <p>No attachments.</p>
-            )}
-          </div>
-          {(isAgent || currentUser.id === ticket.requesterId) && (
-            <FileUpload
-              label="Add new attachments"
-              onFileSelect={handleFileAttach}
-              multiple
-            />
+          {ticket.category && (
+            <div className="meta-item">
+              <label><Tag size={14} /> Category</label>
+              <span>{ticket.category}</span>
+            </div>
           )}
         </div>
 
-        {isAgent && ticket.status !== 'Closed' && (
-          <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-            {ticket.status !== 'Resolved' && (
-              <Button onClick={() => handleUpdateTicket('status', 'Resolved')} variant="success">
-                Mark as Resolved
-              </Button>
-            )}
-            <Button onClick={() => handleUpdateTicket('status', 'Closed')} variant="danger">
-              <XCircle size={18} style={{ marginRight: '8px' }} /> Close Ticket
-            </Button>
+        <div className="card mt-20">
+          <h3>Description</h3>
+          <p>{ticket.description}</p>
+        </div>
+
+        {ticket.attachments && ticket.attachments.length > 0 && (
+          <div className="card mt-20">
+            <h3>Attachments</h3>
+            <ul>
+              {ticket.attachments.map((file, index) => (
+                <li key={index}>
+                  <FileText size={16} style={{ verticalAlign: 'middle', marginRight: '5px' }} />
+                  {file}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
-        <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title="Confirm Close Ticket"
-          footerButtons={[
-            { children: 'Cancel', onClick: () => setIsModalOpen(false), variant: 'secondary' },
-            { children: 'Confirm Close', onClick: confirmCloseTicket, variant: 'danger' }
-          ]}
-        >
-          <p>Are you sure you want to close this ticket? This action cannot be undone.</p>
-        </Modal>
+        <CommentSection
+          ticketId={ticket.id}
+          comments={comments}
+        />
+
+        <div className="activity-log">
+          <h3>Activity Log</h3>
+          <ul className="activity-list">
+            {activities.length === 0 ? (
+              <li>No activity yet.</li>
+            ) : (
+              activities.map((activity) => (
+                <li
+                  key={activity.id}
+                  className="activity-item"
+                >
+                  <div className="activity-icon">
+                    <Activity size={18} />
+                  </div>
+                  <div className="activity-content">
+                    {activity.description}
+                    <span className="activity-timestamp">
+                      {formatDate(activity.timestamp)}
+                    </span>
+                  </div>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
       </div>
     </div>
   );
 };
-
-export default TicketDetailPage;
