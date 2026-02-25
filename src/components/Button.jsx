@@ -1,1 +1,18 @@
-import React from 'react';export const Button = ({    children,    onClick,    type = 'button',    variant = 'primary',    iconOnly = false,    className = ''  }) => {  const buttonClass = `button button--${variant} ${iconOnly ? 'button--icon' : ''} ${className}`;  return (    <button      type={type}      onClick={onClick}      className={buttonClass}    >      {children}    </button>  );};
+import React from 'react';
+
+const Button = ({ children, onClick, variant = 'primary', type = 'button', disabled = false }) => {
+  const className = `btn btn-${variant}`;
+
+  return (
+    <button
+      className={className}
+      onClick={onClick}
+      type={type}
+      disabled={disabled}
+    >
+      {children}
+    </button>
+  );
+};
+
+export default Button;
