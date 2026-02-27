@@ -1,137 +1,50 @@
 import React from 'react';
-import {
-  Link,
-  useNavigate,
-  useLocation
-}
-from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { LogOut } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, Menu } from 'lucide-react';
 
-export const Header = () => {
-  const { currentUser,
-    logout,
-    isAdmin,
-    isAgent,
-    isCustomer } = useAuth();
+function Header({ title }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+  // Determine if a back button should be shown
+  // We'll show it if not on the root path or login/signup
+  const showBackButton = location.pathname !== '/';
+
+  const getTitle = () => {
+    switch (location.pathname) {
+      case '/': return 'Dashboard';
+      case '/input': return 'Record Vitals';
+      case '/trends': return 'Trends & History';
+      case '/reminders': return 'Reminders';
+      case '/settings': return 'Settings';
+      case '/profile': return 'Profile';
+      case '/login': return 'Login';
+      default: return title || 'Health Tracker';
+    }
   };
 
-  const getNavLinkClass = (path) => {
-    return location.pathname === path ? 'active' : '';
+  const handleBackClick = () => {
+    navigate(-1);
   };
 
   return (
     <header className="header">
-      <Link
-        to={currentUser ? '/dashboard' : '/login'}
-        className="header-logo"
-      >
-        Helpdesk
-      </Link>
-      <nav className="header-nav">
-        <ul>
-          {currentUser && (
-            <>
-              {(isAdmin || isAgent) && (
-                <li>
-                  <Link
-                    to="/dashboard"
-                    className={getNavLinkClass('/dashboard')}
-                  >
-                    Dashboard
-                  </Link>
-                </li>
-              )}
-              {(isAdmin || isAgent) && (
-                <li>
-                  <Link
-                    to="/tickets"
-                    className={getNavLinkClass('/tickets')}
-                  >
-                    Tickets
-                  </Link>
-                </li>
-              )}
-              {isCustomer && (
-                <li>
-                  <Link
-                    to="/my-tickets"
-                    className={getNavLinkClass('/my-tickets')}
-                  >
-                    My Tickets
-                  </Link>
-                </li>
-              )}
-              {isCustomer && (
-                <li>
-                  <Link
-                    to="/new-ticket"
-                    className={getNavLinkClass('/new-ticket')}
-                  >
-                    New Ticket
-                  </Link>
-                </li>
-              )}
-              {isAdmin && (
-                <li>
-                  <Link
-                    to="/users"
-                    className={getNavLinkClass('/users')}
-                  >
-                    Users
-                  </Link>
-                </li>
-              )}
-              <li>
-                <Link
-                  to="/profile"
-                  className={getNavLinkClass('/profile')}
-                >
-                  Profile
-                </Link>
-              </li>
-            </>
-          )}
-          {!currentUser && (
-            <>
-              <li>
-                <Link
-                  to="/login"
-                  className={getNavLinkClass('/login')}
-                >
-                  Login
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/register"
-                  className={getNavLinkClass('/register')}
-                >
-                  Register
-                </Link>
-              </li>
-            </>
-          )}
-        </ul>
-      </nav>
-      {currentUser && (
-        <div className="header-user-info">
-          <span>{currentUser.name} ({currentUser.role === 3 ? 'Admin' : currentUser.role === 2 ? 'Agent' : 'Customer'})</span>
-          <button
-            onClick={handleLogout}
-            className="button button-outline"
-          >
-            <LogOut size={18} />
-            Logout
+      <div style={{ visibility: showBackButton ? 'visible' : 'hidden' }}>
+        {showBackButton && (
+          <button onClick={handleBackClick} className="header-button">
+            <ArrowLeft />
           </button>
-        </div>
-      )}
+        )}
+      </div>
+      <h1 className="header-title">{getTitle()}</h1>
+      {/* Placeholder for a potential right-side menu button */}
+      <div style={{ width: '40px' }}>
+        {/* <button className="header-button">
+          <Menu />
+        </button> */}
+      </div>
     </header>
   );
-};
+}
+
+export default Header;
