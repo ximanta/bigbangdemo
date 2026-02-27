@@ -1,0 +1,1 @@
+import React from 'react';const LoadingSpinner = ({ small = false }) => {  return (    <div className="loader-container">      <div className={`loader ${small ? 'loader-small' : ''}`}></div>    </div>  );};export default LoadingSpinner;
