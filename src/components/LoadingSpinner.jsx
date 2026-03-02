@@ -1,1 +1,11 @@
-import React from 'react';const LoadingSpinner = ({ small = false }) => {  return (    <div className="loader-container">      <div className={`loader ${small ? 'loader-small' : ''}`}></div>    </div>  );};export default LoadingSpinner;
+import React from 'react';
+
+const LoadingSpinner = () => {
+  return (
+    <div className="loading-spinner-overlay">
+      <div className="spinner"></div>
+    </div>
+  );
+};
+
+export default LoadingSpinner;
