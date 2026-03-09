@@ -1,68 +1,26 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Header from './components/Header';
+import { Routes, Route } from 'react-router-dom';
 import Footer from './components/Footer';
-import HomePage from './pages/HomePage';
-import ProceduresPage from './pages/ProceduresPage';
-import ProcedureDetailPage from './pages/ProcedureDetailPage';
-import SurgeonPage from './pages/SurgeonPage';
-import GalleryPage from './pages/GalleryPage';
-import TestimonialsPage from './pages/TestimonialsPage';
-import BlogPage from './pages/BlogPage';
-import BlogPostPage from './pages/BlogPostPage';
-import ContactPage from './pages/ContactPage';
-import NotFoundPage from './pages/NotFoundPage';
+import Inventory from './pages/Inventory';
+import Recipes from './pages/Recipes';
+import MealPlan from './pages/MealPlan';
+import ShoppingList from './pages/ShoppingList';
+import Settings from './pages/Settings';
 
 function App() {
   return (
-    <Router>
-      <Header />
-      <main>
+    <>
+      <main style={{ flexGrow: 1, overflowY: 'auto' }}>
         <Routes>
-          <Route
-            path="/"
-            element={<HomePage />}
-          />
-          <Route
-            path="/procedures"
-            element={<ProceduresPage />}
-          />
-          <Route
-            path="/procedures/:id"
-            element={<ProcedureDetailPage />}
-          />
-          <Route
-            path="/surgeon"
-            element={<SurgeonPage />}
-          />
-          <Route
-            path="/gallery"
-            element={<GalleryPage />}
-          />
-          <Route
-            path="/testimonials"
-            element={<TestimonialsPage />}
-          />
-          <Route
-            path="/blog"
-            element={<BlogPage />}
-          />
-          <Route
-            path="/blog/:id"
-            element={<BlogPostPage />}
-          />
-          <Route
-            path="/contact"
-            element={<ContactPage />}
-          />
-          <Route
-            path="*"
-            element={<NotFoundPage />}
-          />
+          <Route path="/" element={<Inventory />} />
+          <Route path="/recipes" element={<Recipes />} />
+          <Route path="/meal-plan" element={<MealPlan />} />
+          <Route path="/shopping-list" element={<ShoppingList />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>
       <Footer />
-    </Router>
+    </>
   );
 }
 

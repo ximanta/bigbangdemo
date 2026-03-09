@@ -1,1 +1,18 @@
-import React, { useState } from 'react';import { Search } from 'lucide-react';import { Link } from 'react-router-dom';export const SearchBar = ({ data, searchKeys, placeholder = 'Search...' }) => {const [searchTerm, setSearchTerm] = useState('');const [searchResults, setSearchResults] = useState([]);const handleSearchChange = (event) => {const value = event.target.value;setSearchTerm(value);if (value.length > 2) {const filteredResults = data.filter(item =>searchKeys.some(key =>item[key] && item[key].toLowerCase().includes(value.toLowerCase())));setSearchResults(filteredResults);} else {setSearchResults([]);}};const handleResultClick = () => {setSearchTerm('');setSearchResults([]);};return (<div className="search-bar"><inputtype="text"placeholder={placeholder}value={searchTerm}onChange={handleSearchChange}className="input-field"/><Search className="search-icon" /><div className="search-results">{searchTerm.length > 2 && searchResults.length > 0 && (<ul>{searchResults.map(item => (<li key={item.id}><Link to={`/${item.type}/${item.slug}`} onClick={handleResultClick}>{item.title || item.name}</Link></li>))}</ul>)}{searchTerm.length > 2 && searchResults.length === 0 && (<ul><li>No results found.</li></ul>)}</div></div>);};
+import React from 'react';
+import { Search } from 'lucide-react';
+
+const SearchBar = ({ searchTerm, onSearchChange, placeholder = 'Search...' }) => {
+  return (
+    <div className="search-bar-container">
+      <input
+        type="text"
+        placeholder={placeholder}
+        className="search-bar-input"
+        value={searchTerm}
+        onChange={(e) => onSearchChange(e.target.value)}
+      />
+    </div>
+  );
+};
+
+export default SearchBar;
