@@ -4,34 +4,49 @@ import Input from '../components/Input';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Notification from '../components/Notification';
-import { LogIn } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 
-function Login({ onLogin }) {
+function Register({ onRegister }) {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [notification, setNotification] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Dummy authentication logic
-    if (email === 'test@example.com' && password === 'password123') {
-      onLogin(email);
+    if (password !== confirmPassword) {
+      setNotification({ message: 'Passwords do not match.', type: 'error' });
+      return;
+    }
+    // Dummy registration logic
+    if (email && password && fullName) {
+      onRegister(fullName); // Pass full name to simulate user creation
     } else {
-      setNotification({ message: 'Invalid email or password.', type: 'error' });
+      setNotification({ message: 'Please fill in all fields.', type: 'error' });
     }
   };
 
   return (
-    <div className="login-container">
+    <div className="register-container">
       <Card className="auth-card">
-        <h2>Welcome Back!</h2>
+        <h2>Create Your Account</h2>
         <p style={{ marginBottom: '25px', color: 'var(--text-light-color)' }}>
-          Log in to access your AI Readiness Navigator.
+          Join the AI Readiness Navigator to start your journey.
         </p>
         <form onSubmit={handleSubmit}>
           <Input
+            label="Full Name"
+            id="register-fullName"
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="John Doe"
+            required
+          />
+          <Input
             label="Email Address"
-            id="login-email"
+            id="register-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -40,19 +55,28 @@ function Login({ onLogin }) {
           />
           <Input
             label="Password"
-            id="login-password"
+            id="register-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
             required
           />
+          <Input
+            label="Confirm Password"
+            id="register-confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+          />
           <Button type="submit" style={{ width: '100%', marginTop: '20px' }}>
-            <LogIn size={18} /> Log In
+            <UserPlus size={18} /> Register
           </Button>
         </form>
         <p>
-          Don't have an account? <Link to="/register">Register here</Link>
+          Already have an account? <Link to="/login">Log in here</Link>
         </p>
       </Card>
       {notification && (
@@ -66,4 +90,4 @@ function Login({ onLogin }) {
   );
 }
 
-export default Login;
+export default Register;

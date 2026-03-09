@@ -1,1 +1,27 @@
-import React from 'react';export const ChartPlaceholder = ({ title, height = '200px' }) => { return ( <div style={{ border:'1px dashed #ccc', padding:'20px', textAlign:'center', height:height, display:'flex', alignItems:'center', justifyContent:'center', backgroundColor:'#f9f9f9', borderRadius:'5px' }}> <p style={{ color:'#888', margin:0 }}>{title || 'Chart Placeholder'}</p> </div> );};
+import React from 'react';
+import { BarChart, LineChart, PieChart } from 'lucide-react';
+
+function ChartPlaceholder({ type = 'bar', title = 'Chart Title' }) {
+  let IconComponent;
+  switch (type) {
+    case 'line':
+      IconComponent = LineChart;
+      break;
+    case 'pie':
+      IconComponent = PieChart;
+      break;
+    case 'bar':
+    default:
+      IconComponent = BarChart;
+      break;
+  }
+
+  return (
+    <div className="chart-placeholder">
+      <IconComponent size={48} style={{ marginRight: '10px', color: 'var(--border-color)' }} />
+      <span>{title} (Placeholder)</span>
+    </div>
+  );
+}
+
+export default ChartPlaceholder;

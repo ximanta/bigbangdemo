@@ -1,1 +1,194 @@
-import React, { useState } from 'react';import { Card } from '../components/Card';import { Button } from '../components/Button';import { Input } from '../components/Input';import { Table } from '../components/Table';import { Select } from '../components/Select';import { Modal } from '../components/Modal';import { mockUsers } from '../data/mockData';export const Settings = () => { const [kitchenName, setKitchenName] = useState('Cloud Kitchen Hub'); const [kitchenAddress, setKitchenAddress] = useState('123 Food Street, Culinary City'); const [contactEmail, setContactEmail] = useState('contact@cloudkitchenhub.com'); const [uberEatsApiKey, setUberEatsApiKey] = useState('uber_api_key_123'); const [doordashApiKey, setDoordashApiKey] = useState('doordash_api_key_456'); const [users, setUsers] = useState(mockUsers); const [isUserModalOpen, setIsUserModalOpen] = useState(false); const [editingUser, setEditingUser] = useState(null); const [userFormData, setUserFormData] = useState({ name:'', email:'', role:'Chef' }); const handleSaveKitchenSettings = () => { alert('Kitchen settings saved!'); }; const handleSaveIntegrationSettings = () => { alert('Integration settings saved!'); }; const handleOpenUserModal = (user = null) => { setEditingUser(user); setUserFormData(user ? { name:user.name, email:user.email, role:user.role } : { name:'', email:'', role:'Chef' }); setIsUserModalOpen(true); }; const handleCloseUserModal = () => { setIsUserModalOpen(false); setEditingUser(null); }; const handleUserFormChange = (e) => { const { name, value } = e.target; setUserFormData(prev => ({ ...prev, [name]: value })); }; const handleSaveUser = () => { if (!userFormData.name || !userFormData.email) { alert('Name and Email are required.'); return; } if (editingUser) { setUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...userFormData } : u )); alert(`User ${userFormData.name} updated.`); } else { const newUser = { id:`U${Date.now()}`, ...userFormData }; setUsers(prev => [...prev, newUser]); alert(`User ${userFormData.name} added.`); } handleCloseUserModal(); }; const handleDeleteUser = (id) => { if (window.confirm('Are you sure you want to delete this user?')) { setUsers(prev => prev.filter(u => u.id !== id)); alert('User deleted.'); } }; const userHeaders = ['Name', 'Email', 'Role', 'Actions']; const renderUserRow = (user) => ( <tr key={user.id}> <td>{user.name}</td> <td>{user.email}</td> <td>{user.role}</td> <td className="action-buttons"> <Button variant="secondary" onClick={() => handleOpenUserModal(user)}> Edit </Button> <Button variant="danger" onClick={() => handleDeleteUser(user.id)}> Delete </Button> </td> </tr> ); return ( <div className="main-content"> <h1>Settings</h1> <Card title="Kitchen Profile Settings"> <Input label="Kitchen Name" id="kitchenName" value={kitchenName} onChange={(e) => setKitchenName(e.target.value)} /> <Input label="Address" id="kitchenAddress" value={kitchenAddress} onChange={(e) => setKitchenAddress(e.target.value)} /> <Input label="Contact Email" id="contactEmail" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} /> <Button variant="primary" onClick={handleSaveKitchenSettings} className="mt-20"> Save Kitchen Settings </Button> </Card> <Card title="Integration Settings" className="mt-20"> <Input label="Uber Eats API Key" id="uberEatsApiKey" value={uberEatsApiKey} onChange={(e) => setUberEatsApiKey(e.target.value)} /> <Input label="DoorDash API Key" id="doordashApiKey" value={doordashApiKey} onChange={(e) => setDoordashApiKey(e.target.value)} /> <p><strong>Zomato:</strong> Connected</p> <Button variant="primary" onClick={handleSaveIntegrationSettings} className="mt-20"> Save Integration Settings </Button> </Card> <Card title="User Management" className="mt-20"> <div className="flex-container justify-between mb-20"> <h3>Manage Staff Accounts</h3> <Button variant="primary" onClick={() => handleOpenUserModal()}> Add New User </Button> </div> <Table headers={userHeaders} data={users} renderRow={renderUserRow} /> </Card> <Modal isOpen={isUserModalOpen} onClose={handleCloseUserModal} title={editingUser ? `Edit User: ${editingUser.name}` : 'Add New User'}> <Input label="Name" id="userName" name="name" value={userFormData.name} onChange={handleUserFormChange} required={true} /> <Input label="Email" id="userEmail" name="email" type="email" value={userFormData.email} onChange={handleUserFormChange} required={true} /> <Select label="Role" id="userRole" name="role" value={userFormData.role} onChange={handleUserFormChange} options={[ { value:'Admin', label:'Admin' }, { value:'Chef', label:'Chef' }, { value:'Dispatcher', label:'Dispatcher' } ]} required={true} /> <div className="flex-container justify-between mt-20"> <Button variant="secondary" onClick={handleCloseUserModal}> Cancel </Button> <Button variant="primary" onClick={handleSaveUser}> {editingUser ? 'Save Changes' : 'Add User'} </Button> </div> </Modal> </div> );};
+import React, { useState } from 'react';
+import Card from '../components/Card';
+import Input from '../components/Input';
+import Button from '../components/Button';
+import Checkbox from '../components/Checkbox';
+import Notification from '../components/Notification';
+import { Save, User, Mail, Lock, Bell } from 'lucide-react';
+
+function Settings() {
+  const [profileData, setProfileData] = useState({
+    fullName: 'John Doe',
+    email: 'john.doe@example.com',
+    jobTitle: 'AI Strategist',
+    organization: 'InnovateCorp',
+  });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [notificationSettings, setNotificationSettings] = useState({
+    emailUpdates: true,
+    assessmentReminders: false,
+    resourceRecommendations: true,
+  });
+  const [notification, setNotification] = useState(null);
+
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfileData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleNotificationChange = (e) => {
+    const { name, checked } = e.target;
+    setNotificationSettings((prev) => ({ ...prev, [name]: checked }));
+  };
+
+  const handleUpdateProfile = (e) => {
+    e.preventDefault();
+    console.log('Profile updated:', profileData);
+    setNotification({ message: 'Profile updated successfully!', type: 'success' });
+  };
+
+  const handleChangePassword = (e) => {
+    e.preventDefault();
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setNotification({ message: 'New passwords do not match.', type: 'error' });
+      return;
+    }
+    if (!passwordData.currentPassword || !passwordData.newPassword) {
+      setNotification({ message: 'Please fill all password fields.', type: 'error' });
+      return;
+    }
+    console.log('Password changed:', passwordData);
+    setNotification({ message: 'Password changed successfully!', type: 'success' });
+    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  };
+
+  const handleUpdateNotifications = (e) => {
+    e.preventDefault();
+    console.log('Notification settings updated:', notificationSettings);
+    setNotification({ message: 'Notification settings updated!', type: 'success' });
+  };
+
+  return (
+    <div>
+      <div className="page-header">
+        <h1 className="page-title">User Settings</h1>
+      </div>
+
+      <div className="grid-cols-2">
+        <Card title="Profile Information">
+          <form onSubmit={handleUpdateProfile}>
+            <Input
+              label="Full Name"
+              id="fullName"
+              name="fullName"
+              value={profileData.fullName}
+              onChange={handleProfileChange}
+              required
+            />
+            <Input
+              label="Email Address"
+              id="email"
+              name="email"
+              type="email"
+              value={profileData.email}
+              onChange={handleProfileChange}
+              required
+            />
+            <Input
+              label="Job Title"
+              id="jobTitle"
+              name="jobTitle"
+              value={profileData.jobTitle}
+              onChange={handleProfileChange}
+            />
+            <Input
+              label="Organization"
+              id="organization"
+              name="organization"
+              value={profileData.organization}
+              onChange={handleProfileChange}
+            />
+            <Button type="submit" style={{ marginTop: '20px' }}>
+              <Save size={18} /> Save Profile
+            </Button>
+          </form>
+        </Card>
+
+        <Card title="Change Password">
+          <form onSubmit={handleChangePassword}>
+            <Input
+              label="Current Password"
+              id="currentPassword"
+              name="currentPassword"
+              type="password"
+              value={passwordData.currentPassword}
+              onChange={handlePasswordChange}
+              required
+            />
+            <Input
+              label="New Password"
+              id="newPassword"
+              name="newPassword"
+              type="password"
+              value={passwordData.newPassword}
+              onChange={handlePasswordChange}
+              required
+            />
+            <Input
+              label="Confirm New Password"
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              value={passwordData.confirmPassword}
+              onChange={handlePasswordChange}
+              required
+            />
+            <Button type="submit" style={{ marginTop: '20px' }}>
+              <Lock size={18} /> Change Password
+            </Button>
+          </form>
+        </Card>
+      </div>
+
+      <Card title="Notification Preferences" style={{ marginTop: '20px' }}>
+        <form onSubmit={handleUpdateNotifications}>
+          <div className="form-group">
+            <Checkbox
+              id="emailUpdates"
+              name="emailUpdates"
+              label="Receive email updates and newsletters"
+              checked={notificationSettings.emailUpdates}
+              onChange={handleNotificationChange}
+            />
+            <Checkbox
+              id="assessmentReminders"
+              name="assessmentReminders"
+              label="Get reminders for pending assessments"
+              checked={notificationSettings.assessmentReminders}
+              onChange={handleNotificationChange}
+            />
+            <Checkbox
+              id="resourceRecommendations"
+              name="resourceRecommendations"
+              label="Receive personalized resource recommendations"
+              checked={notificationSettings.resourceRecommendations}
+              onChange={handleNotificationChange}
+            />
+          </div>
+          <Button type="submit" style={{ marginTop: '10px' }}>
+            <Bell size={18} /> Update Notifications
+          </Button>
+        </form>
+      </Card>
+
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+export default Settings;

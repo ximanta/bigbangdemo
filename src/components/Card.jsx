@@ -1,17 +1,12 @@
 import React from 'react';
 
-const Card = ({ title, actions, children, className = '', ...props }) => {
+function Card({ children, title, className = '' }) {
   return (
-    <div className={`card ${className}`.trim()} {...props}>
-      {(title || actions) && (
-        <div className="card-header">
-          {title && <h3>{title}</h3>}
-          {actions && <div>{actions}</div>}
-        </div>
-      )}
-      <div>{children}</div>
+    <div className={`card ${className}`}>
+      {title && <h3 className="card-title">{title}</h3>}
+      {children}
     </div>
   );
-};
+}
 
 export default Card;

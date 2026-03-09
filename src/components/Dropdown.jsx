@@ -1,23 +1,16 @@
 import React from 'react';
 
-const Select = ({
-  label,
-  id,
-  options = [],
-  value,
-  onChange,
-  className = '',
-  ...props
-}) => {
+function Dropdown({ label, options, value, onChange, id, name, required = false }) {
   return (
-    <div className="form-group">
-      {label && <label htmlFor={id}>{label}</label>}
+    <div className="input-field-group">
+      {label && <label htmlFor={id} className="input-label">{label}</label>}
       <select
         id={id}
+        name={name}
         value={value}
         onChange={onChange}
-        className={`select-field ${className}`.trim()}
-        {...props}
+        className="dropdown-select"
+        required={required}
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -27,6 +20,6 @@ const Select = ({
       </select>
     </div>
   );
-};
+}
 
-export default Select;
+export default Dropdown;

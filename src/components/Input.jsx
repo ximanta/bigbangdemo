@@ -1,29 +1,21 @@
 import React from 'react';
 
-const Input = ({
-  label,
-  id,
-  type = 'text',
-  value,
-  onChange,
-  placeholder,
-  className = '',
-  ...props
-}) => {
+function Input({ label, type = 'text', value, onChange, placeholder, id, name, required = false }) {
   return (
-    <div className="form-group">
-      {label && <label htmlFor={id}>{label}</label>}
+    <div className="input-field-group">
+      {label && <label htmlFor={id} className="input-label">{label}</label>}
       <input
-        id={id}
         type={type}
+        id={id}
+        name={name}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`input-field ${className}`.trim()}
-        {...props}
+        className="input-field"
+        required={required}
       />
     </div>
   );
-};
+}
 
 export default Input;

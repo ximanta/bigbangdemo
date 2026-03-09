@@ -1,96 +1,86 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import DashboardPage from './pages/DashboardPage';
-import OrdersPage from './pages/OrdersPage';
-import MenuPage from './pages/MenuPage';
-import InventoryPage from './pages/InventoryPage';
-import ReportsPage from './pages/ReportsPage';
-import SettingsPage from './pages/SettingsPage';
-import UserProfilePage from './pages/UserProfilePage';
-import MainLayout from './layouts/MainLayout';
-import AuthLayout from './layouts/AuthLayout';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
+import Dashboard from './pages/Dashboard';
+import Assessment from './pages/Assessment';
+import LearningPaths from './pages/LearningPaths';
+import Resources from './pages/Resources';
+import Settings from './pages/Settings';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Notification from './components/Notification';
 
-const App = () => {
+function App() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [notifications, setNotifications] = useState([]);
+  const [notification, setNotification] = useState(null);
 
-  const handleLogin = (username, password) => {
-    if (username === 'admin' && password === 'password') {
+  // Dummy authentication logic
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
       setIsAuthenticated(true);
-      addNotification('Login successful!', 'success');
-      return true;
+    } else {
+      setIsAuthenticated(false);
     }
-    addNotification('Invalid credentials.', 'error');
-    return false;
+  }, []);
+
+  const handleLogin = (username) => {
+    localStorage.setItem('authToken', 'dummy-token-123');
+    setIsAuthenticated(true);
+    setNotification({ message: `Welcome back, ${username}!`, type: 'success' });
+    navigate('/dashboard');
+  };
+
+  const handleRegister = (username) => {
+    localStorage.setItem('authToken', 'dummy-token-123');
+    setIsAuthenticated(true);
+    setNotification({ message: `Account created for ${username}!`, type: 'success' });
+    navigate('/dashboard');
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('authToken');
     setIsAuthenticated(false);
-    addNotification('Logged out successfully.', 'info');
+    setNotification({ message: 'You have been logged out.', type: 'info' });
+    navigate('/login');
   };
 
-  const addNotification = (message, type = 'info') => {
-    const newNotification = {
-      id: Date.now(),
-      message,
-      type,
-    };
-    setNotifications((prev) => [...prev, newNotification]);
-    setTimeout(() => {
-      setNotifications((prev) =>
-        prev.filter((n) => n.id !== newNotification.id)
-      );
-    }, 5000);
-  };
+  const showNavbarAndSidebar = !['/login', '/register'].includes(location.pathname);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/login"
-          element={
-            <AuthLayout>
-              <LoginPage onLogin={handleLogin} />
-            </AuthLayout>
-          }
+    <div className="app-container">
+      {showNavbarAndSidebar && <Sidebar onLogout={handleLogout} />}
+      <div className="content-area">
+        {showNavbarAndSidebar && <Navbar />}
+        <Routes>
+          <Route path="/login" element={<Login onLogin={handleLogin} />} />
+          <Route path="/register" element={<Register onRegister={handleRegister} />} />
+          {isAuthenticated ? (
+            <>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/assessment" element={<Assessment />} />
+              <Route path="/learning-paths" element={<LearningPaths />} />
+              <Route path="/resources" element={<Resources />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="*" element={<Dashboard />} /> {/* Default route after login */}
+            </>
+          ) : (
+            <Route path="*" element={<Login onLogin={handleLogin} />} />
+          )}
+        </Routes>
+      </div>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
         />
-        <Route
-          path="/register"
-          element={
-            <AuthLayout>
-              <RegisterPage />
-            </AuthLayout>
-          }
-        />
-
-        {isAuthenticated ? (
-          <Route
-            path="/"
-            element={
-              <MainLayout
-                onLogout={handleLogout}
-                notifications={notifications}
-                addNotification={addNotification}
-              />
-            }
-          >
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage addNotification={addNotification} />} />
-            <Route path="orders" element={<OrdersPage addNotification={addNotification} />} />
-            <Route path="menu" element={<MenuPage addNotification={addNotification} />} />
-            <Route path="inventory" element={<InventoryPage addNotification={addNotification} />} />
-            <Route path="reports" element={<ReportsPage />} />
-            <Route path="settings" element={<SettingsPage addNotification={addNotification} />} />
-            <Route path="profile" element={<UserProfilePage />} />
-          </Route>
-        ) : (
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        )}
-      </Routes>
-    </BrowserRouter>
+      )}
+    </div>
   );
-};
+}
 
 export default App;

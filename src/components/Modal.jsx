@@ -1,50 +1,31 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
-import Button from './Button';
 
-const Modal = ({ isOpen, onClose, title, children, actions }) => {
-  const modalRef = useRef(null);
-
+function Modal({ isOpen, onClose, title, children }) {
   useEffect(() => {
-    const handleEscape = (event) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
     } else {
-      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
     }
-
     return () => {
-      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleOverlayClick = (event) => {
-    if (modalRef.current && !modalRef.current.contains(event.target)) {
-      onClose();
-    }
-  };
-
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-content" ref={modalRef}>
-        <div className="modal-header">
-          <h3>{title}</h3>
-          <button onClick={onClose} className="modal-close-button">
-            <X size={24} />
-          </button>
-        </div>
-        <div className="modal-body">{children}</div>
-        {actions && <div className="modal-actions">{actions}</div>}
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close-button" onClick={onClose}>
+          <X size={24} />
+        </button>
+        {title && <h3 className="card-title" style={{ marginBottom: '20px' }}>{title}</h3>}
+        {children}
       </div>
     </div>
   );
-};
+}
 
 export default Modal;

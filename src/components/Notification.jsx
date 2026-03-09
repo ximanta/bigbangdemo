@@ -1,30 +1,48 @@
-import React from 'react';
-import { Info, CheckCircle, XCircle, AlertTriangle, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 
-const Notification = ({ id, message, type, onClose }) => {
-  const getIcon = () => {
-    switch (type) {
-      case 'success':
-        return <CheckCircle color="var(--success-color)" />;
-      case 'error':
-        return <XCircle color="var(--danger-color)" />;
-      case 'warning':
-        return <AlertTriangle color="var(--warning-color)" />;
-      case 'info':
-      default:
-        return <Info color="var(--info-color)" />;
-    }
+function Notification({ message, type = 'info', onClose, duration = 5000 }) {
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(false);
+      if (onClose) onClose();
+    }, duration);
+
+    return () => clearTimeout(timer);
+  }, [duration, onClose]);
+
+  const handleClose = () => {
+    setIsVisible(false);
+    if (onClose) onClose();
   };
 
+  if (!isVisible) return null;
+
+  let IconComponent;
+  switch (type) {
+    case 'success':
+      IconComponent = CheckCircle;
+      break;
+    case 'error':
+      IconComponent = AlertCircle;
+      break;
+    case 'info':
+    default:
+      IconComponent = Info;
+      break;
+  }
+
   return (
-    <div className={`notification notification-${type}`}>
-      <div className="notification-icon">{getIcon()}</div>
-      <div className="notification-message">{message}</div>
-      <button onClick={() => onClose(id)} className="notification-close">
+    <div className={`notification-bar ${type}`}>
+      <IconComponent size={20} />
+      <span>{message}</span>
+      <button onClick={handleClose} className="notification-close-button">
         <X size={18} />
       </button>
     </div>
   );
-};
+}
 
 export default Notification;
